@@ -1,0 +1,8 @@
+[package]
+name = "data-editor"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "data-editor"
+path = "src/main.rs"

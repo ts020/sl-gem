@@ -1,0 +1,5 @@
+For overall design, refer to docs/plan.md.
+For detailed design, refer to docs/architecture.md.
+For progress tracking, refer to docs/milestone.md.
+After completing work, update docs/milestone.md.
+If design changes occur during development, update docs/architecture.md.

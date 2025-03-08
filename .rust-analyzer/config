@@ -1,0 +1,8 @@
+{
+  "rust-analyzer.inlayHints.enable": true,
+  "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+  "rust-analyzer.files.excludeDirs": ["target"],
+  "rust-analyzer.procMacro.enable": false,
+  "rust-analyzer.checkOnSave": false,
+  "rust-analyzer.check.command": "clippy"
+}
