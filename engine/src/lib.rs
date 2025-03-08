@@ -71,6 +71,17 @@ impl Engine {
         self.publish("engine", GameEvent::Stop)?;
         Ok(())
     }
+
+    /// マップをASCIIアートとしてレンダリングする
+    pub fn render_map_ascii(&self, map_gui: &MapGUI) -> String {
+        map_gui.render_ascii()
+    }
+
+    /// マップをASCIIアートとしてコンソールに出力する（マップ部分のみ）
+    pub fn print_map_ascii(&self, map_gui: &MapGUI) -> String {
+        // マップ文字列を返す（実際の表示は呼び出し側で行う）
+        self.render_map_ascii(map_gui)
+    }
 }
 
 impl Default for Engine {

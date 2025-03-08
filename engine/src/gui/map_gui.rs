@@ -12,6 +12,8 @@ pub struct MapViewOptions {
     pub scroll_y: i32,
     pub zoom: f32,
     pub show_grid: bool,
+    pub viewport_width: u32,  // ビューポートの幅（タイル単位）
+    pub viewport_height: u32, // ビューポートの高さ（タイル単位）
 }
 
 impl Default for MapViewOptions {
@@ -22,6 +24,8 @@ impl Default for MapViewOptions {
             scroll_y: 0,
             zoom: 1.0,
             show_grid: true,
+            viewport_width: 20,  // デフォルトのビューポート幅
+            viewport_height: 15, // デフォルトのビューポート高さ
         }
     }
 }
@@ -239,6 +243,140 @@ impl MapGUI {
     pub fn render(&self) {
         // このメソッドは、将来的にはレンダリングシステムにマップGUIの状態を提供します
         // 現在は抽象的なインターフェースとしてのみ存在しています
+    }
+
+    /// ASCIIアートとしてマップを表示する
+    pub fn render_ascii(&self) -> String {
+        if let Some(map) = &self.map {
+            let mut output = String::new();
+
+            // スクロール位置をタイル単位に変換（小数点以下切り捨て）
+            let scaled_tile_size =
+                (self.view_options.tile_size as f32 * self.view_options.zoom) as i32;
+            let scroll_tile_x = if scaled_tile_size > 0 {
+                self.view_options.scroll_x / scaled_tile_size
+            } else {
+                0
+            };
+            let scroll_tile_y = if scaled_tile_size > 0 {
+                self.view_options.scroll_y / scaled_tile_size
+            } else {
+                0
+            };
+
+            // ビューポート内に表示されるタイルの範囲を計算
+            let start_x = scroll_tile_x.max(0);
+            let start_y = scroll_tile_y.max(0);
+            let end_x =
+                (scroll_tile_x + self.view_options.viewport_width as i32).min(map.width as i32);
+            let end_y =
+                (scroll_tile_y + self.view_options.viewport_height as i32).min(map.height as i32);
+
+            // スクロール情報を表示
+            output.push_str(&format!(
+                "スクロール位置: ({}, {}) タイル\n",
+                start_x, start_y
+            ));
+            output.push_str(&format!(
+                "表示範囲: {}×{} タイル\n",
+                end_x - start_x,
+                end_y - start_y
+            ));
+
+            // ヘッダー行（X座標）を追加
+            output.push_str("   ");
+            for x in start_x..end_x {
+                output.push_str(&format!("{:2}", x % 10));
+            }
+            output.push('\n');
+
+            // 境界線
+            output.push_str("  +");
+            for _ in start_x..end_x {
+                output.push_str("--");
+            }
+            output.push_str("+\n");
+
+            for y in start_y..end_y {
+                // Y座標を追加
+                output.push_str(&format!("{:2}|", y % 10));
+
+                for x in start_x..end_x {
+                    let pos = MapPosition::new(x, y);
+                    let is_selected = self
+                        .selected_position
+                        .is_some_and(|selected| selected.x == x && selected.y == y);
+                    let is_highlighted = self
+                        .highlight_positions
+                        .iter()
+                        .any(|p| p.x == x && p.y == y);
+
+                    // ユニットの確認
+                    let unit_at_pos = self.get_unit_at_position(&pos);
+
+                    // セルタイプに基づいて文字を選択
+                    let mut symbol = match map.get_cell(&pos) {
+                        Some(cell) => match cell.cell_type {
+                            model::CellType::Plain => ".",
+                            model::CellType::Forest => "T",
+                            model::CellType::Mountain => "^",
+                            model::CellType::Water => "~",
+                            model::CellType::Road => "=",
+                            model::CellType::City => "C",
+                            model::CellType::Base => "B",
+                        },
+                        None => " ",
+                    }
+                    .to_string();
+
+                    // ユニットがある場合はユニットの文字を優先
+                    if let Some(unit) = unit_at_pos {
+                        symbol = match unit.unit_type {
+                            model::UnitType::Infantry => "I",
+                            model::UnitType::Cavalry => "K",
+                            model::UnitType::Ranged => "R",
+                            model::UnitType::Siege => "S",
+                            model::UnitType::Support => "U",
+                        }
+                        .to_string();
+
+                        // ユニットの所有勢力によって色分けできないので、勢力IDを数字で表現（将来的にはANSIカラーコードなどで色付け可能）
+                        if unit.faction_id > 0 {
+                            symbol = format!("{}", unit.faction_id);
+                        }
+                    }
+
+                    // 選択または強調表示の装飾
+                    if is_selected {
+                        symbol = format!("[{}]", symbol);
+                    } else if is_highlighted {
+                        symbol = format!("*{}*", symbol);
+                    } else {
+                        symbol = format!(" {} ", symbol);
+                    }
+
+                    output.push_str(&symbol);
+                }
+
+                output.push_str("|\n");
+            }
+
+            // 下部境界線
+            output.push_str("  +");
+            for _ in start_x..end_x {
+                output.push_str("--");
+            }
+            output.push_str("+\n");
+
+            output
+        } else {
+            "マップが設定されていません。".to_string()
+        }
+    }
+
+    /// コンソールにASCIIアートとしてマップを表示する
+    pub fn print_ascii_map(&self) {
+        println!("{}", self.render_ascii());
     }
 }
 
