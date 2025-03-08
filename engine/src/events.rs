@@ -1,5 +1,5 @@
 use crossbeam_channel::{bounded, Receiver, Sender};
-use model::Position;
+use model::MapPosition;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -45,7 +45,7 @@ pub enum GameEvent {
     Update { delta: f32 },
     TurnStart { faction_id: u32 },
     TurnEnd { faction_id: u32 },
-    UnitMove { unit_id: u32, position: Position },
+    UnitMove { unit_id: u32, position: MapPosition },
 
     // 情報イベント（Low Priority）
     Log { message: String, level: LogLevel },
