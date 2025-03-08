@@ -3,5 +3,5 @@ For detailed design, refer to docs/architecture.md.
 For progress tracking, refer to docs/milestone.md.
 After completing work, update docs/milestone.md.
 If design changes occur during development, update docs/architecture.md.
-Before committing changes, run scripts/check.sh to verify formatting, tests, and compilation.
+Before committing changes, ensure that `cargo check`, `cargo fmt`, and `cargo clippy` pass successfully.
 All code changes must follow Test-Driven Development: write tests first, make them pass, then refactor.
