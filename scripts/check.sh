@@ -33,6 +33,9 @@ done
 # 重複を除去
 PACKAGES=$(echo "$PACKAGES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
+echo "ビルドチェックを実行中..."
+cargo check
+
 # フォーマットチェック
 echo "フォーマットをチェック中..."
 cargo fmt -- --check
@@ -51,6 +54,11 @@ if [ -n "$PACKAGES" ]; then
         echo "パッケージ $package のテストを実行中..."
         cargo test -p $package
     done
+else
+    # パッケージが特定できない場合はワークスペース全体をチェック
+    echo "ワークスペース全体をチェック中..."
+    cargo clippy --all-targets -- -D warnings
+    cargo test --all
 fi
 
 echo "=== すべてのチェックが完了しました ==="

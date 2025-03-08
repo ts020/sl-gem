@@ -1,7 +1,8 @@
 mod events;
 
-use crate::events::{EventBus, GameEvent};
+use crate::events::EventBus;
 use anyhow::Result;
+pub use events::GameEvent;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -106,6 +107,3 @@ impl GameLoop {
         Ok(())
     }
 }
-
-// Re-export
-pub use events::GameEvent;
