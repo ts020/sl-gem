@@ -12,6 +12,8 @@ pub struct MapViewOptions {
     pub scroll_y: i32,
     pub zoom: f32,
     pub show_grid: bool,
+    pub viewport_width: u32,  // ビューポートの幅（タイル単位）
+    pub viewport_height: u32, // ビューポートの高さ（タイル単位）
 }
 
 impl Default for MapViewOptions {
@@ -22,6 +24,8 @@ impl Default for MapViewOptions {
             scroll_y: 0,
             zoom: 1.0,
             show_grid: true,
+            viewport_width: 20,   // デフォルトのビューポート幅
+            viewport_height: 15,  // デフォルトのビューポート高さ
         }
     }
 }
@@ -246,25 +250,40 @@ impl MapGUI {
         if let Some(map) = &self.map {
             let mut output = String::new();
 
+            // スクロール位置をタイル単位に変換（小数点以下切り捨て）
+            let scaled_tile_size = (self.view_options.tile_size as f32 * self.view_options.zoom) as i32;
+            let scroll_tile_x = if scaled_tile_size > 0 { self.view_options.scroll_x / scaled_tile_size } else { 0 };
+            let scroll_tile_y = if scaled_tile_size > 0 { self.view_options.scroll_y / scaled_tile_size } else { 0 };
+
+            // ビューポート内に表示されるタイルの範囲を計算
+            let start_x = scroll_tile_x.max(0);
+            let start_y = scroll_tile_y.max(0);
+            let end_x = (scroll_tile_x + self.view_options.viewport_width as i32).min(map.width as i32);
+            let end_y = (scroll_tile_y + self.view_options.viewport_height as i32).min(map.height as i32);
+
+            // スクロール情報を表示
+            output.push_str(&format!("スクロール位置: ({}, {}) タイル\n", start_x, start_y));
+            output.push_str(&format!("表示範囲: {}×{} タイル\n", end_x - start_x, end_y - start_y));
+
             // ヘッダー行（X座標）を追加
             output.push_str("   ");
-            for x in 0..map.width as i32 {
+            for x in start_x..end_x {
                 output.push_str(&format!("{:2}", x % 10));
             }
             output.push('\n');
 
             // 境界線
             output.push_str("  +");
-            for _ in 0..map.width {
+            for _ in start_x..end_x {
                 output.push_str("--");
             }
             output.push_str("+\n");
 
-            for y in 0..map.height as i32 {
+            for y in start_y..end_y {
                 // Y座標を追加
                 output.push_str(&format!("{:2}|", y % 10));
 
-                for x in 0..map.width as i32 {
+                for x in start_x..end_x {
                     let pos = MapPosition::new(x, y);
                     let is_selected = self
                         .selected_position
@@ -326,7 +345,7 @@ impl MapGUI {
 
             // 下部境界線
             output.push_str("  +");
-            for _ in 0..map.width {
+            for _ in start_x..end_x {
                 output.push_str("--");
             }
             output.push_str("+\n");
