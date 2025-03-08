@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 /// 2D座標を表す構造体
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Position {
+pub struct MapPosition {
     pub x: i32,
     pub y: i32,
 }
 
-impl Position {
+impl MapPosition {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
@@ -21,7 +21,7 @@ impl Position {
     }
 
     /// 2点間のマンハッタン距離を計算
-    pub fn manhattan_distance(&self, other: &Position) -> u32 {
+    pub fn manhattan_distance(&self, other: &MapPosition) -> u32 {
         ((self.x - other.x).abs() + (self.y - other.y).abs()) as u32
     }
 }
@@ -94,7 +94,7 @@ impl Cell {
 pub struct Map {
     pub width: u32,
     pub height: u32,
-    cells: HashMap<Position, Cell>,
+    cells: HashMap<MapPosition, Cell>,
 }
 
 impl Map {
@@ -107,14 +107,14 @@ impl Map {
     }
 
     /// 指定された位置にセルを設定
-    pub fn set_cell(&mut self, pos: Position, cell: Cell) {
+    pub fn set_cell(&mut self, pos: MapPosition, cell: Cell) {
         if self.is_valid_position(&pos) {
             self.cells.insert(pos, cell);
         }
     }
 
     /// 指定された位置のセルを取得
-    pub fn get_cell(&self, pos: &Position) -> Option<&Cell> {
+    pub fn get_cell(&self, pos: &MapPosition) -> Option<&Cell> {
         if self.is_valid_position(pos) {
             self.cells.get(pos)
         } else {
@@ -123,12 +123,12 @@ impl Map {
     }
 
     /// 指定された位置が有効かどうかを検証
-    pub fn is_valid_position(&self, pos: &Position) -> bool {
+    pub fn is_valid_position(&self, pos: &MapPosition) -> bool {
         pos.x >= 0 && pos.y >= 0 && pos.x < self.width as i32 && pos.y < self.height as i32
     }
 
     /// 指定された位置の隣接セルの位置を取得
-    pub fn get_adjacent_positions(&self, pos: &Position) -> Vec<Position> {
+    pub fn get_adjacent_positions(&self, pos: &MapPosition) -> Vec<MapPosition> {
         let directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]; // 上、右、下、左
 
         directions
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn test_position() {
-        let pos = Position::new(5, 10);
+        let pos = MapPosition::new(5, 10);
         assert_eq!(pos.x, 5);
         assert_eq!(pos.y, 10);
 
@@ -171,14 +171,14 @@ mod tests {
     fn test_map_basic() {
         let mut map = Map::new(10, 10);
 
-        let pos = Position::new(5, 5);
+        let pos = MapPosition::new(5, 5);
         map.set_cell(pos, Cell::new(CellType::Plain));
 
         let cell = map.get_cell(&pos).unwrap();
         assert_eq!(cell.cell_type, CellType::Plain);
         assert_eq!(cell.faction_id, None);
 
-        let invalid_pos = Position::new(20, 20);
+        let invalid_pos = MapPosition::new(20, 20);
         assert!(map.get_cell(&invalid_pos).is_none());
     }
 
@@ -187,11 +187,11 @@ mod tests {
         let mut map = Map::new(5, 5);
 
         // マップ中央のセル
-        let center = Position::new(2, 2);
+        let center = MapPosition::new(2, 2);
         map.set_cell(center, Cell::new(CellType::Plain));
 
         // マップの端のセル
-        let edge = Position::new(0, 0);
+        let edge = MapPosition::new(0, 0);
         map.set_cell(edge, Cell::new(CellType::Forest));
 
         let center_adjacent = map.get_adjacent_positions(&center);

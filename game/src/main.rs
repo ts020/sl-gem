@@ -2,7 +2,7 @@ use anyhow::Result;
 use engine::gui::map_gui::{MapGUI, MapViewOptions};
 use engine::{Engine, GameEvent, LoopConfig};
 use log::{info, LevelFilter};
-use model::{Cell, CellType, Faction, FactionType, Map, Position, Unit, UnitType};
+use model::{Cell, CellType, Faction, FactionType, Map, MapPosition, Unit, UnitType};
 use rand::{thread_rng, Rng};
 use std::{thread, time::Duration};
 
@@ -16,7 +16,7 @@ fn create_demo_map() -> Map {
     // ランダムなマップを生成
     for x in 0..width as i32 {
         for y in 0..height as i32 {
-            let position = Position::new(x, y);
+            let position = MapPosition::new(x, y);
             let cell_type = match rng.gen_range(0..100) {
                 0..=60 => CellType::Plain,
                 61..=75 => CellType::Forest,
@@ -77,7 +77,7 @@ fn create_demo_units() -> Vec<Unit> {
             format!("プレイヤーユニット{}", i + 1),
             unit_type,
             1, // プレイヤー勢力ID
-            Position::new(rng.gen_range(0..5), rng.gen_range(0..5)),
+            MapPosition::new(rng.gen_range(0..5), rng.gen_range(0..5)),
         ));
     }
 
@@ -88,7 +88,7 @@ fn create_demo_units() -> Vec<Unit> {
             format!("同盟ユニット{}", i + 1),
             UnitType::Infantry,
             2, // 同盟勢力ID
-            Position::new(rng.gen_range(5..10), rng.gen_range(0..5)),
+            MapPosition::new(rng.gen_range(5..10), rng.gen_range(0..5)),
         ));
     }
 
@@ -104,7 +104,7 @@ fn create_demo_units() -> Vec<Unit> {
             format!("敵対ユニット{}", i + 1),
             unit_type,
             3, // 敵対勢力ID
-            Position::new(rng.gen_range(10..15), rng.gen_range(5..10)),
+            MapPosition::new(rng.gen_range(10..15), rng.gen_range(5..10)),
         ));
     }
 
@@ -118,7 +118,7 @@ fn print_map_info(map_gui: &MapGUI) {
 
         let selected_pos = map_gui.get_selected_position();
         if let Some(pos) = selected_pos {
-            // Positionは外部型なのでデバッグ形式で表示
+            // MapPositionは外部型なのでデバッグ形式で表示
             println!("選択中の位置: {:?}", pos);
 
             if let Some(cell) = map.get_cell(&pos) {
@@ -210,7 +210,7 @@ fn main() -> Result<()> {
 
     // マップのある位置を選択
     println!("\n位置(5, 5)を選択します...");
-    let pos = Position::new(5, 5);
+    let pos = MapPosition::new(5, 5);
     if let Err(e) = map_gui.select_position(pos) {
         println!("位置選択でエラー: {}", e);
     }

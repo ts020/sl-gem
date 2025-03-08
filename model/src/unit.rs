@@ -1,4 +1,4 @@
-use crate::map::Position;
+use crate::map::MapPosition;
 
 /// ユニットの種類
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,7 +63,7 @@ pub struct Unit {
     pub name: String,
     pub unit_type: UnitType,
     pub faction_id: u32,
-    pub position: Position,
+    pub position: MapPosition,
     pub health: u32,
     pub experience: u32,
     pub status: UnitStatus,
@@ -79,7 +79,7 @@ impl Unit {
         name: String,
         unit_type: UnitType,
         faction_id: u32,
-        position: Position,
+        position: MapPosition,
     ) -> Self {
         let movement_points = unit_type.base_movement();
 
@@ -119,7 +119,7 @@ impl Unit {
     }
 
     /// ユニットの移動
-    pub fn move_to(&mut self, new_position: Position, cost: u32) -> bool {
+    pub fn move_to(&mut self, new_position: MapPosition, cost: u32) -> bool {
         if self.movement_points >= cost {
             self.position = new_position;
             self.movement_points -= cost;
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_unit_creation() {
-        let position = Position::new(5, 5);
+        let position = MapPosition::new(5, 5);
         let unit = Unit::new(1, "テスト歩兵".to_string(), UnitType::Infantry, 1, position);
 
         assert_eq!(unit.id, 1);
@@ -201,13 +201,13 @@ mod tests {
 
     #[test]
     fn test_unit_movement() {
-        let start_pos = Position::new(1, 1);
+        let start_pos = MapPosition::new(1, 1);
         let mut unit = Unit::new(1, "テスト騎兵".to_string(), UnitType::Cavalry, 1, start_pos);
 
         assert_eq!(unit.movement_points, 5); // 騎兵の基本移動力
 
         // 移動の成功
-        let new_pos = Position::new(3, 3);
+        let new_pos = MapPosition::new(3, 3);
         assert!(unit.move_to(new_pos, 3));
         assert_eq!(unit.position.x, 3);
         assert_eq!(unit.position.y, 3);
@@ -215,7 +215,7 @@ mod tests {
         assert_eq!(unit.status, UnitStatus::Moving);
 
         // 移動ポイントをすべて使い切る移動
-        let final_pos = Position::new(4, 4);
+        let final_pos = MapPosition::new(4, 4);
         assert!(unit.move_to(final_pos, 2));
         assert_eq!(unit.position.x, 4);
         assert_eq!(unit.position.y, 4);
@@ -223,7 +223,7 @@ mod tests {
         assert_eq!(unit.status, UnitStatus::Exhausted);
 
         // 移動ポイントが足りない場合
-        let impossible_pos = Position::new(5, 5);
+        let impossible_pos = MapPosition::new(5, 5);
         assert!(!unit.move_to(impossible_pos, 1));
         assert_eq!(unit.position.x, 4); // 位置は変わらない
         assert_eq!(unit.position.y, 4);
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_unit_damage() {
-        let position = Position::new(0, 0);
+        let position = MapPosition::new(0, 0);
         let mut unit = Unit::new(1, "テスト歩兵".to_string(), UnitType::Infantry, 1, position);
 
         // 軽いダメージ
@@ -251,11 +251,11 @@ mod tests {
 
     #[test]
     fn test_unit_reset() {
-        let position = Position::new(0, 0);
+        let position = MapPosition::new(0, 0);
         let mut unit = Unit::new(1, "テスト歩兵".to_string(), UnitType::Infantry, 1, position);
 
         // 移動ポイントを消費して疲労状態に
-        assert!(unit.move_to(Position::new(1, 1), 3));
+        assert!(unit.move_to(MapPosition::new(1, 1), 3));
         assert_eq!(unit.movement_points, 0);
         assert_eq!(unit.status, UnitStatus::Exhausted);
 
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_unit_power_calculation() {
-        let position = Position::new(0, 0);
+        let position = MapPosition::new(0, 0);
         let mut unit = Unit::new(1, "テスト歩兵".to_string(), UnitType::Infantry, 1, position);
 
         // 初期状態
