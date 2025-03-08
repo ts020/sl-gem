@@ -1,8 +1,26 @@
 # Milestone
 
-- [ ] Initial project setup
+- [ ] 戦略エンジン実装 [開始: 2025/03/08]
+  - [x] MapGUIの実装 (2025/03/08)
+    - [x] マップ表示の基本機能
+    - [x] ユニット表示と選択機能
+    - [x] マップ操作（スクロール、ズーム）
+  - [ ] 拠点GUIの実装
+    - [ ] 拠点情報表示
+    - [ ] 拠点管理画面
+  - [ ] 勢力GUIの実装
+    - [ ] 勢力情報表示
+    - [ ] 外交関係管理
+  - [ ] ターンシステムの実装
+    - [ ] ターン管理の基本機能
+    - [ ] フェーズ制御（移動フェーズ、戦闘フェーズなど）
+  - [ ] 敵勢力のCPUロジック
+    - [ ] 基本的なAI決定アルゴリズム
+    - [ ] 難易度調整システム
 
 ## Completed
+
+- [x] Initial project setup
 
 - Added rust-analyzer configuration to .rust-analyzer/config:
   - rust-analyzer.inlayHints.enable: true
