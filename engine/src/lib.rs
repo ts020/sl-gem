@@ -1,24 +1,12 @@
-mod events;
+pub mod core;
+pub mod events;
 
-use crate::events::EventBus;
+use self::core::{GameLoop as CoreGameLoop, LoopConfig as CoreLoopConfig};
+pub use self::events::{EventBus, GameEvent, LogLevel, Position, PrioritizedEvent, Priority};
 use anyhow::Result;
-pub use events::GameEvent;
-use std::time::Duration;
 
-#[derive(Debug)]
-pub struct LoopConfig {
-    pub frame_rate: u32,
-    pub update_rate: u32,
-}
-
-impl Default for LoopConfig {
-    fn default() -> Self {
-        LoopConfig {
-            frame_rate: 60,
-            update_rate: 60,
-        }
-    }
-}
+// CoreLoopConfigをLoopConfigとして再エクスポート
+pub type LoopConfig = CoreLoopConfig;
 
 /// ゲームエンジンの主要な構造体
 #[derive(Clone)]
@@ -91,6 +79,7 @@ impl Default for Engine {
     }
 }
 
+// GameEventを受け取るシンプルなGameLoopのラッパー
 pub struct GameLoop {
     config: LoopConfig,
     receiver: crossbeam_channel::Receiver<GameEvent>,
@@ -102,22 +91,28 @@ impl GameLoop {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        let frame_duration = Duration::from_secs_f32(1.0 / self.config.frame_rate as f32);
+        // PrioritizedEventチャンネルを作成
+        let (sender, prioritized_receiver) = crossbeam_channel::bounded(100);
 
-        loop {
-            match self.receiver.try_recv() {
-                Ok(GameEvent::Stop) => break,
-                Ok(GameEvent::Update { delta }) => {
-                    log::debug!("Update: delta = {}", delta);
+        // 受信したGameEventをPrioritizedEventに変換して送信するスレッド
+        let receiver = self.receiver.clone();
+        std::thread::spawn(move || {
+            while let Ok(event) = receiver.recv() {
+                let priority = event.default_priority();
+                if sender
+                    .send(PrioritizedEvent {
+                        priority,
+                        event: event.clone(),
+                    })
+                    .is_err()
+                {
+                    break;
                 }
-                Ok(event) => log::debug!("Received event: {:?}", event),
-                Err(crossbeam_channel::TryRecvError::Empty) => (),
-                Err(e) => log::error!("Error receiving event: {}", e),
             }
+        });
 
-            std::thread::sleep(frame_duration);
-        }
-
-        Ok(())
+        // コアGameLoopを初期化して実行
+        let mut core_loop = CoreGameLoop::new(self.config.clone(), prioritized_receiver);
+        core_loop.run()
     }
 }

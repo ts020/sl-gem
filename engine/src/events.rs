@@ -3,18 +3,15 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 /// イベントの優先度を表現する列挙型
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     High,
+    #[default]
     Normal,
     Low,
 }
 
-impl Default for Priority {
-    fn default() -> Self {
-        Priority::Normal
-    }
-}
+use std::fmt;
 
 /// ログレベルを表現する列挙型
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -22,6 +19,16 @@ pub enum LogLevel {
     Info,
     Warning,
     Error,
+}
+
+impl fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LogLevel::Info => write!(f, "Info"),
+            LogLevel::Warning => write!(f, "Warning"),
+            LogLevel::Error => write!(f, "Error"),
+        }
+    }
 }
 
 /// 位置を表現する構造体
