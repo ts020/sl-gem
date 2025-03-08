@@ -16,10 +16,10 @@ fn main() -> Result<()> {
     // エンジンの初期化
     let mut engine = Engine::new();
     let event_bus = engine.event_bus();
-    
+
     // システムイベントの購読
     let receiver = event_bus.subscribe("system")?;
-    
+
     // ゲームループの設定
     let config = LoopConfig::default();
     let mut game_loop = engine::GameLoop::new(config, receiver);
@@ -38,9 +38,7 @@ fn main() -> Result<()> {
                 .unwrap();
             if i == 5 {
                 // 最後にStopイベントを送信
-                event_bus_clone
-                    .publish("system", GameEvent::Stop)
-                    .unwrap();
+                event_bus_clone.publish("system", GameEvent::Stop).unwrap();
             }
         }
     });

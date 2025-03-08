@@ -45,7 +45,7 @@ impl GameLoop {
     /// ゲームループの実行
     pub fn run(&mut self) -> Result<()> {
         info!("Starting game loop");
-        
+
         while let Ok(event) = self.event_receiver.recv() {
             match event {
                 GameEvent::Stop => {

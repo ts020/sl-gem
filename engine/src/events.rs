@@ -55,13 +55,14 @@ mod tests {
     #[test]
     fn test_event_bus() {
         let bus = EventBus::new();
-        
+
         // イベントの購読
         let receiver = bus.subscribe("update").unwrap();
-        
+
         // イベントの発行
-        bus.publish("update", GameEvent::Update { delta: 0.16 }).unwrap();
-        
+        bus.publish("update", GameEvent::Update { delta: 0.16 })
+            .unwrap();
+
         // 受信したイベントの確認
         if let Ok(GameEvent::Update { delta }) = receiver.recv() {
             assert_eq!(delta, 0.16);
