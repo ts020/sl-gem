@@ -1,0 +1,111 @@
+name: Rust CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v42
+      with:
+        files_yaml: |
+          rust:
+            - '**/*.rs'
+            - '**/Cargo.toml'
+            - '**/Cargo.lock'
+
+    - name: Determine affected packages
+      id: get-packages
+      if: steps.changed-files.outputs.rust_any_changed == 'true'
+      run: |
+        # 初期の変更パッケージを特定
+        changed_packages=""
+        for file in ${{ steps.changed-files.outputs.rust_all_changed_files }}; do
+          if [[ $file == engine/* ]]; then
+            changed_packages="$changed_packages engine"
+          elif [[ $file == game/* ]]; then
+            changed_packages="$changed_packages game"
+          elif [[ $file == model/* ]]; then
+            changed_packages="$changed_packages model"
+          elif [[ $file == data-editor/* ]]; then
+            changed_packages="$changed_packages data-editor"
+          fi
+        done
+        changed_packages=$(echo $changed_packages | tr ' ' '\n' | sort -u)
+
+        # 依存関係を解析するPythonスクリプト
+        cat << 'EOF' > analyze_deps.py
+        import json
+        import sys
+        
+        def get_dependent_packages(metadata, changed_packages):
+            # パッケージIDからパッケージ名へのマッピングを作成
+            id_to_name = {pkg['id']: pkg['name'] for pkg in metadata['packages']}
+            
+            # パッケージ名から依存されているパッケージを見つける
+            affected_packages = set(changed_packages)
+            
+            # 変更されたパッケージに依存する全てのパッケージを見つける
+            for pkg in metadata['packages']:
+                pkg_name = pkg['name']
+                for dep in pkg.get('dependencies', []):
+                    dep_name = dep.get('name', '')
+                    if dep_name in changed_packages and pkg_name not in affected_packages:
+                        affected_packages.add(pkg_name)
+            
+            return affected_packages
+        
+        metadata = json.loads(sys.stdin.read())
+        changed_packages = sys.argv[1].split(',')
+        
+        affected_packages = get_dependent_packages(metadata, changed_packages)
+        print(' '.join(f'-p {pkg}' for pkg in affected_packages))
+        EOF
+        
+        # 依存関係を解析して影響を受けるパッケージを特定
+        if [ -n "$changed_packages" ]; then
+          affected_packages=$(cargo metadata --format-version=1 | python3 analyze_deps.py "$(echo "$changed_packages" | tr '\n' ',')")
+          echo "packages=$affected_packages" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Check formatting
+      run: cargo fmt -- --check
+
+    - name: Run tests for affected packages
+      if: steps.get-packages.outputs.packages != ''
+      run: |
+        if [ -n "${{ steps.get-packages.outputs.packages }}" ]; then
+          cargo test ${{ steps.get-packages.outputs.packages }} --verbose
+        fi
+
+    - name: Run clippy for affected packages
+      if: steps.get-packages.outputs.packages != ''
+      run: |
+        if [ -n "${{ steps.get-packages.outputs.packages }}" ]; then
+          cargo clippy ${{ steps.get-packages.outputs.packages }} -- -D warnings
+        fi
