@@ -71,6 +71,22 @@ impl Engine {
         self.publish("engine", GameEvent::Stop)?;
         Ok(())
     }
+
+    /// マップをASCIIアートとしてレンダリングする
+    pub fn render_map_ascii(&self, map_gui: &MapGUI) -> String {
+        map_gui.render_ascii()
+    }
+
+    /// マップをASCIIアートとしてコンソールに出力する
+    pub fn print_map_ascii(&self, map_gui: &MapGUI) {
+        println!("\nASCIIマップ表示:");
+        println!("{}", self.render_map_ascii(map_gui));
+
+        println!("\n凡例:");
+        println!("地形: .=平地, T=森, ^=山, ~=水域, ==道路, C=都市, B=拠点");
+        println!("ユニット: 1=プレイヤー勢力, 2=同盟勢力, 3=敵対勢力");
+        println!("状態: [x]=選択中, *x*=ハイライト表示\n");
+    }
 }
 
 impl Default for Engine {

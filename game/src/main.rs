@@ -112,7 +112,10 @@ fn create_demo_units() -> Vec<Unit> {
 }
 
 /// マップの状態をコンソールに表示
-fn print_map_info(map_gui: &MapGUI) {
+fn print_map_info(engine: &Engine, map_gui: &MapGUI) {
+    // Engineのレンダリング機能を使用してマップを表示
+    engine.print_map_ascii(map_gui);
+
     if let Some(map) = map_gui.get_map() {
         println!("マップサイズ: {}x{}", map.width, map.height);
 
@@ -203,7 +206,7 @@ fn main() -> Result<()> {
 
     // マップの情報を表示
     println!("\n初期マップ情報:");
-    print_map_info(&map_gui);
+    print_map_info(&engine, &map_gui);
 
     // テスト用の動作を直接実行
     thread::sleep(Duration::from_millis(500));
@@ -213,11 +216,24 @@ fn main() -> Result<()> {
     let pos = MapPosition::new(5, 5);
     if let Err(e) = map_gui.select_position(pos) {
         println!("位置選択でエラー: {}", e);
+    } else {
+        // 選択した位置の周囲をハイライト表示（移動可能範囲のシミュレーション）
+        let highlights = vec![
+            pos.moved(1, 0),
+            pos.moved(-1, 0),
+            pos.moved(0, 1),
+            pos.moved(0, -1),
+            pos.moved(1, 1),
+            pos.moved(-1, -1),
+            pos.moved(1, -1),
+            pos.moved(-1, 1),
+        ];
+        map_gui.highlight_positions(highlights);
     }
 
     thread::sleep(Duration::from_millis(1000));
     println!("\n選択後のマップ情報:");
-    print_map_info(&map_gui);
+    print_map_info(&engine, &map_gui);
 
     // マップをスクロール
     println!("\nマップをスクロールします...");
@@ -225,7 +241,7 @@ fn main() -> Result<()> {
 
     thread::sleep(Duration::from_millis(1000));
     println!("\nスクロール後のマップ情報:");
-    print_map_info(&map_gui);
+    print_map_info(&engine, &map_gui);
 
     // マップをズーム
     println!("\nマップをズームします...");
@@ -233,7 +249,7 @@ fn main() -> Result<()> {
 
     thread::sleep(Duration::from_millis(1000));
     println!("\nズーム後のマップ情報:");
-    print_map_info(&map_gui);
+    print_map_info(&engine, &map_gui);
 
     // 別スレッドでStopイベントを送信（5秒後）
     let event_bus_clone = event_bus.clone();

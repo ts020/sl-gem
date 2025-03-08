@@ -240,6 +240,107 @@ impl MapGUI {
         // このメソッドは、将来的にはレンダリングシステムにマップGUIの状態を提供します
         // 現在は抽象的なインターフェースとしてのみ存在しています
     }
+
+    /// ASCIIアートとしてマップを表示する
+    pub fn render_ascii(&self) -> String {
+        if let Some(map) = &self.map {
+            let mut output = String::new();
+
+            // ヘッダー行（X座標）を追加
+            output.push_str("   ");
+            for x in 0..map.width as i32 {
+                output.push_str(&format!("{:2}", x % 10));
+            }
+            output.push('\n');
+
+            // 境界線
+            output.push_str("  +");
+            for _ in 0..map.width {
+                output.push_str("--");
+            }
+            output.push_str("+\n");
+
+            for y in 0..map.height as i32 {
+                // Y座標を追加
+                output.push_str(&format!("{:2}|", y % 10));
+
+                for x in 0..map.width as i32 {
+                    let pos = MapPosition::new(x, y);
+                    let is_selected = self
+                        .selected_position
+                        .map_or(false, |selected| selected.x == x && selected.y == y);
+                    let is_highlighted = self
+                        .highlight_positions
+                        .iter()
+                        .any(|p| p.x == x && p.y == y);
+
+                    // ユニットの確認
+                    let unit_at_pos = self.get_unit_at_position(&pos);
+
+                    // セルタイプに基づいて文字を選択
+                    let mut symbol = match map.get_cell(&pos) {
+                        Some(cell) => match cell.cell_type {
+                            model::CellType::Plain => ".",
+                            model::CellType::Forest => "T",
+                            model::CellType::Mountain => "^",
+                            model::CellType::Water => "~",
+                            model::CellType::Road => "=",
+                            model::CellType::City => "C",
+                            model::CellType::Base => "B",
+                        },
+                        None => " ",
+                    }
+                    .to_string();
+
+                    // ユニットがある場合はユニットの文字を優先
+                    if let Some(unit) = unit_at_pos {
+                        symbol = match unit.unit_type {
+                            model::UnitType::Infantry => "I",
+                            model::UnitType::Cavalry => "K",
+                            model::UnitType::Ranged => "R",
+                            model::UnitType::Siege => "S",
+                            model::UnitType::Support => "U",
+                        }
+                        .to_string();
+
+                        // ユニットの所有勢力によって色分けできないので、勢力IDを数字で表現（将来的にはANSIカラーコードなどで色付け可能）
+                        if unit.faction_id > 0 {
+                            symbol = format!("{}", unit.faction_id);
+                        }
+                    }
+
+                    // 選択または強調表示の装飾
+                    if is_selected {
+                        symbol = format!("[{}]", symbol);
+                    } else if is_highlighted {
+                        symbol = format!("*{}*", symbol);
+                    } else {
+                        symbol = format!(" {} ", symbol);
+                    }
+
+                    output.push_str(&symbol);
+                }
+
+                output.push_str("|\n");
+            }
+
+            // 下部境界線
+            output.push_str("  +");
+            for _ in 0..map.width {
+                output.push_str("--");
+            }
+            output.push_str("+\n");
+
+            output
+        } else {
+            "マップが設定されていません。".to_string()
+        }
+    }
+
+    /// コンソールにASCIIアートとしてマップを表示する
+    pub fn print_ascii_map(&self) {
+        println!("{}", self.render_ascii());
+    }
 }
 
 #[cfg(test)]
