@@ -39,7 +39,21 @@ impl Engine {
 
     /// イベントの購読を登録
     pub fn subscribe(&self, event_type: &str) -> Result<crossbeam_channel::Receiver<GameEvent>> {
-        self.event_bus.subscribe(event_type)
+        let prioritized_receiver = self.event_bus.subscribe(event_type)?;
+
+        // PrioritizedEventからGameEventに変換するチャネルを作成
+        let (sender, receiver) = crossbeam_channel::bounded(100);
+
+        // 別スレッドでPrioritizedEventを受信してGameEventに変換して送信
+        std::thread::spawn(move || {
+            while let Ok(prioritized_event) = prioritized_receiver.recv() {
+                if sender.send(prioritized_event.event).is_err() {
+                    break;
+                }
+            }
+        });
+
+        Ok(receiver)
     }
 
     /// イベントを発行

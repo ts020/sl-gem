@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     let event_bus = engine.event_bus();
 
     // システムイベントの購読
-    let receiver = event_bus.subscribe("system")?;
+    let receiver = engine.subscribe("system")?;
 
     // ゲームループの設定
     let config = LoopConfig::default();
