@@ -4,3 +4,4 @@ For progress tracking, refer to docs/milestone.md.
 After completing work, update docs/milestone.md.
 If design changes occur during development, update docs/architecture.md.
 Before committing changes, run scripts/check.sh to verify formatting, tests, and compilation.
+All code changes must follow Test-Driven Development: write tests first, make them pass, then refactor.
