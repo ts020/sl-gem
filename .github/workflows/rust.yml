@@ -39,10 +39,6 @@ jobs:
             - '**/Cargo.toml'
             - '**/Cargo.lock'
 
-    - name: Install cargo-metadata
-      if: steps.changed-files.outputs.rust_any_changed == 'true'
-      run: cargo install cargo-metadata
-
     - name: Determine affected packages
       id: get-packages
       if: steps.changed-files.outputs.rust_any_changed == 'true'
@@ -62,9 +58,6 @@ jobs:
         done
         changed_packages=$(echo $changed_packages | tr ' ' '\n' | sort -u)
 
-        # cargo-metadataを使用して依存関係グラフを取得
-        metadata=$(cargo metadata --format-version 1)
-        
         # 依存関係を解析するPythonスクリプト
         cat << 'EOF' > analyze_deps.py
         import json
@@ -96,9 +89,12 @@ jobs:
         
         # 依存関係を解析して影響を受けるパッケージを特定
         if [ -n "$changed_packages" ]; then
-          affected_packages=$(echo "$metadata" | python3 analyze_deps.py "$(echo "$changed_packages" | tr '\n' ',')")
+          affected_packages=$(cargo metadata --format-version=1 | python3 analyze_deps.py "$(echo "$changed_packages" | tr '\n' ',')")
           echo "packages=$affected_packages" >> $GITHUB_OUTPUT
         fi
+
+    - name: Check formatting
+      run: cargo fmt -- --check
 
     - name: Run tests for affected packages
       if: steps.get-packages.outputs.packages != ''
@@ -106,9 +102,6 @@ jobs:
         if [ -n "${{ steps.get-packages.outputs.packages }}" ]; then
           cargo test ${{ steps.get-packages.outputs.packages }} --verbose
         fi
-
-    - name: Check formatting
-      run: cargo fmt -- --check
 
     - name: Run clippy for affected packages
       if: steps.get-packages.outputs.packages != ''
