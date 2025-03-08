@@ -79,11 +79,8 @@ impl Engine {
 
     /// マップをASCIIアートとしてコンソールに出力する（マップ部分のみ）
     pub fn print_map_ascii(&self, map_gui: &MapGUI) -> String {
-        // マップの文字列を取得
-        let map_string = self.render_map_ascii(map_gui);
-        
         // マップ文字列を返す（実際の表示は呼び出し側で行う）
-        map_string
+        self.render_map_ascii(map_gui)
     }
 }
 

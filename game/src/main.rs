@@ -4,13 +4,7 @@ use engine::{Engine, GameEvent, LoopConfig};
 use log::{info, LevelFilter};
 use model::{Cell, CellType, Faction, FactionType, Map, MapPosition, Unit, UnitType};
 use rand::{thread_rng, Rng};
-use std::{io, thread, time::Duration};
-
-/// キー入力を待機する関数
-fn wait_for_key() {
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-}
+use std::{thread, time::Duration};
 
 /// サンプルマップを作成
 fn create_demo_map() -> Map {
@@ -121,20 +115,20 @@ fn create_demo_units() -> Vec<Unit> {
 fn print_map_info(engine: &Engine, map_gui: &MapGUI) {
     // ANSIエスケープシーケンスを使用して画面をクリアし、カーソルを先頭に移動
     print!("\x1B[2J\x1B[H");
-    
+
     // マップの文字列を取得
     let map_string = engine.print_map_ascii(map_gui);
-    
+
     // マップの表示
     println!("ASCIIマップ表示:");
     println!("{}", map_string);
-    
+
     // 固定位置に凡例と詳細情報を表示
     println!("\n凡例:");
     println!("地形: .=平地, T=森, ^=山, ~=水域, ==道路, C=都市, B=拠点");
     println!("ユニット: 1=プレイヤー勢力, 2=同盟勢力, 3=敵対勢力");
     println!("状態: [x]=選択中, *x*=ハイライト表示\n");
-    
+
     // マップの詳細情報
     if let Some(map) = map_gui.get_map() {
         println!("マップサイズ: {}x{}", map.width, map.height);
@@ -172,7 +166,7 @@ fn print_map_info(engine: &Engine, map_gui: &MapGUI) {
         "  スクロール: ({}, {})",
         view_options.scroll_x, view_options.scroll_y
     );
-    
+
     // 標準出力をフラッシュして即座に表示を反映
     std::io::Write::flush(&mut std::io::stdout()).unwrap();
 }
@@ -252,7 +246,7 @@ fn main() -> Result<()> {
         ];
         map_gui.highlight_positions(highlights);
     }
-    
+
     // 選択状態を表示
     print_map_info(&engine, &map_gui);
     println!("位置(5, 5)を選択しました。1秒後に自動スクロールを開始します...");
@@ -284,7 +278,7 @@ fn main() -> Result<()> {
         println!("上方向スクロール {}/3", i);
         thread::sleep(Duration::from_secs(1));
     }
-    
+
     // ズームしてみる
     map_gui.zoom(1.5);
     print_map_info(&engine, &map_gui);

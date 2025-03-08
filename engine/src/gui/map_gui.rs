@@ -24,8 +24,8 @@ impl Default for MapViewOptions {
             scroll_y: 0,
             zoom: 1.0,
             show_grid: true,
-            viewport_width: 20,   // デフォルトのビューポート幅
-            viewport_height: 15,  // デフォルトのビューポート高さ
+            viewport_width: 20,  // デフォルトのビューポート幅
+            viewport_height: 15, // デフォルトのビューポート高さ
         }
     }
 }
@@ -251,19 +251,37 @@ impl MapGUI {
             let mut output = String::new();
 
             // スクロール位置をタイル単位に変換（小数点以下切り捨て）
-            let scaled_tile_size = (self.view_options.tile_size as f32 * self.view_options.zoom) as i32;
-            let scroll_tile_x = if scaled_tile_size > 0 { self.view_options.scroll_x / scaled_tile_size } else { 0 };
-            let scroll_tile_y = if scaled_tile_size > 0 { self.view_options.scroll_y / scaled_tile_size } else { 0 };
+            let scaled_tile_size =
+                (self.view_options.tile_size as f32 * self.view_options.zoom) as i32;
+            let scroll_tile_x = if scaled_tile_size > 0 {
+                self.view_options.scroll_x / scaled_tile_size
+            } else {
+                0
+            };
+            let scroll_tile_y = if scaled_tile_size > 0 {
+                self.view_options.scroll_y / scaled_tile_size
+            } else {
+                0
+            };
 
             // ビューポート内に表示されるタイルの範囲を計算
             let start_x = scroll_tile_x.max(0);
             let start_y = scroll_tile_y.max(0);
-            let end_x = (scroll_tile_x + self.view_options.viewport_width as i32).min(map.width as i32);
-            let end_y = (scroll_tile_y + self.view_options.viewport_height as i32).min(map.height as i32);
+            let end_x =
+                (scroll_tile_x + self.view_options.viewport_width as i32).min(map.width as i32);
+            let end_y =
+                (scroll_tile_y + self.view_options.viewport_height as i32).min(map.height as i32);
 
             // スクロール情報を表示
-            output.push_str(&format!("スクロール位置: ({}, {}) タイル\n", start_x, start_y));
-            output.push_str(&format!("表示範囲: {}×{} タイル\n", end_x - start_x, end_y - start_y));
+            output.push_str(&format!(
+                "スクロール位置: ({}, {}) タイル\n",
+                start_x, start_y
+            ));
+            output.push_str(&format!(
+                "表示範囲: {}×{} タイル\n",
+                end_x - start_x,
+                end_y - start_y
+            ));
 
             // ヘッダー行（X座標）を追加
             output.push_str("   ");
@@ -287,7 +305,7 @@ impl MapGUI {
                     let pos = MapPosition::new(x, y);
                     let is_selected = self
                         .selected_position
-                        .map_or(false, |selected| selected.x == x && selected.y == y);
+                        .is_some_and(|selected| selected.x == x && selected.y == y);
                     let is_highlighted = self
                         .highlight_positions
                         .iter()
