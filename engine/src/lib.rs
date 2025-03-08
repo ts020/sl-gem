@@ -1,8 +1,11 @@
 pub mod core;
 pub mod events;
+pub mod gui;
 
 use self::core::{GameLoop as CoreGameLoop, LoopConfig as CoreLoopConfig};
-pub use self::events::{EventBus, GameEvent, LogLevel, Position, PrioritizedEvent, Priority};
+pub use self::events::{EventBus, GameEvent, LogLevel, PrioritizedEvent, Priority};
+pub use self::gui::{map_gui::MapGUI, map_gui::MapViewOptions};
+// modelのPositionをre-exportしない - 直接modelからインポートする
 use anyhow::Result;
 
 // CoreLoopConfigをLoopConfigとして再エクスポート

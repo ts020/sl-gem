@@ -1,4 +1,5 @@
 use crossbeam_channel::{bounded, Receiver, Sender};
+use model::Position;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -29,13 +30,6 @@ impl fmt::Display for LogLevel {
             LogLevel::Error => write!(f, "Error"),
         }
     }
-}
-
-/// 位置を表現する構造体
-#[derive(Clone, Debug)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32,
 }
 
 /// ゲーム内で発生する様々なイベントを表現する列挙型
