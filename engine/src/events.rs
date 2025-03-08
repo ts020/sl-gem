@@ -63,7 +63,7 @@ mod tests {
         let receiver = event_bus.subscribe("test")?;
 
         event_bus.publish("test", GameEvent::Start)?;
-        
+
         if let Ok(received_event) = receiver.try_recv() {
             match received_event {
                 GameEvent::Start => Ok(()),
