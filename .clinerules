@@ -6,3 +6,5 @@ If design changes occur during development, update docs/architecture.md.
 Before committing changes, ensure that `cargo check`, `cargo fmt`, and `cargo clippy` pass successfully.
 All code changes must follow Test-Driven Development: write tests first, make them pass, then refactor.
 If you encounter the same failure twice, try a different approach or solution strategy.
+Follow functional programming paradigm practices.
+Strictly adhere to Test-Driven Development principles.

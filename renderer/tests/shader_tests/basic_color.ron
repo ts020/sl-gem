@@ -1,0 +1,56 @@
+(
+  name: "基本色テスト",
+  description: "基本的な色付き四角形のレンダリングテスト",
+  shader: BuiltIn("test"),
+  vertex_data: [
+    // position(x, y, z), texcoord(u, v)
+    (-0.8, -0.8, 0.0, 0.0, 0.0),
+    (0.8, -0.8, 0.0, 1.0, 0.0),
+    (0.8, 0.8, 0.0, 1.0, 1.0),
+    (-0.8, 0.8, 0.0, 0.0, 1.0),
+  ],
+  index_data: [
+    0, 1, 2, 0, 2, 3,
+  ],
+  // インスタンスデータを追加
+  instance_data: [
+    (
+      model_matrix: [
+        1.0, 0.0, 0.0, 0.0,  // 1行目
+        0.0, 1.0, 0.0, 0.0,  // 2行目
+        0.0, 0.0, 1.0, 0.0,  // 3行目
+        0.0, 0.0, 0.0, 1.0   // 4行目
+      ],
+      color: [1.0, 0.5, 0.0, 1.0]
+    ),
+  ],
+  parameters: [
+    (
+      name: "color_r",
+      description: "赤色成分",
+      min: 0.0,
+      max: 1.0,
+      default: 1.0,
+      step: 0.01,
+    ),
+    (
+      name: "color_g",
+      description: "緑色成分",
+      min: 0.0,
+      max: 1.0,
+      default: 0.5,
+      step: 0.01,
+    ),
+    (
+      name: "color_b",
+      description: "青色成分",
+      min: 0.0,
+      max: 1.0,
+      default: 0.0,
+      step: 0.01,
+    ),
+  ],
+  output_size: (512, 512),
+  background_color: (0.1, 0.1, 0.1, 1.0),
+  tolerance: 0.01,
+)

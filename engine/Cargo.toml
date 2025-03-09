@@ -10,8 +10,21 @@ path = "src/lib.rs"
 name = "engine_bin"
 path = "src/main.rs"
 
+[[bin]]
+name = "graphical_map_demo"
+path = "src/bin/graphical_map_demo.rs"
+
 [dependencies]
 crossbeam-channel = "0.5"
 anyhow = "1.0"
 log = "0.4"
 model = { path = "../model" }
+
+# グラフィックス関連の依存関係
+wgpu = "0.17"
+winit = "0.28"
+bytemuck = { version = "1.13", features = ["derive"] }
+image = "0.24"
+glam = "0.24"                                          # ベクトル/行列計算用
+futures-intrusive = "0.5"                              # 非同期処理用
+tokio = { version = "1.28", features = ["full"] }      # 非同期ランタイム

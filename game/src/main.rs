@@ -1,10 +1,15 @@
 use anyhow::Result;
-use engine::gui::map_gui::{MapGUI, MapViewOptions};
+use engine::gui::{graphical_map_gui::GraphicalMapGUI, map_gui::MapViewOptions, RenderMode};
 use engine::{Engine, GameEvent, LoopConfig};
 use log::{info, LevelFilter};
 use model::{Cell, CellType, Faction, FactionType, Map, MapPosition, Unit, UnitType};
 use rand::{thread_rng, Rng};
 use std::{thread, time::Duration};
+use winit::{
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::Window,
+};
 
 /// サンプルマップを作成
 fn create_demo_map() -> Map {
@@ -112,12 +117,17 @@ fn create_demo_units() -> Vec<Unit> {
 }
 
 /// マップの状態をコンソールに表示（固定位置に表示）
-fn print_map_info(engine: &Engine, map_gui: &MapGUI) {
+fn print_map_info(engine: &Engine, map_gui: &GraphicalMapGUI) {
+    // グラフィカルモードの場合は表示しない
+    if map_gui.render_mode == RenderMode::Graphical {
+        return;
+    }
+
     // ANSIエスケープシーケンスを使用して画面をクリアし、カーソルを先頭に移動
     print!("\x1B[2J\x1B[H");
 
     // マップの文字列を取得
-    let map_string = engine.print_map_ascii(map_gui);
+    let map_string = engine.print_map_ascii(&map_gui.map_gui);
 
     // マップの表示
     println!("ASCIIマップ表示:");
@@ -171,7 +181,8 @@ fn print_map_info(engine: &Engine, map_gui: &MapGUI) {
     std::io::Write::flush(&mut std::io::stdout()).unwrap();
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     // ロガーの初期化
     env_logger::Builder::new()
         .filter_level(LevelFilter::Debug)
@@ -182,6 +193,12 @@ fn main() -> Result<()> {
     println!("戦略エンジン実装テスト\n");
     info!("ゲームを起動します...");
 
+    // ウィンドウとイベントループを作成
+    let event_loop = EventLoop::new();
+    let window = Window::new(&event_loop).unwrap();
+    window.set_title("SL-GEM グラフィカルマップデモ");
+    window.set_inner_size(winit::dpi::PhysicalSize::new(800, 600));
+
     // エンジンの初期化
     let mut engine = Engine::new();
     let event_bus = engine.event_bus();
@@ -189,12 +206,55 @@ fn main() -> Result<()> {
     // システムイベントの購読
     let receiver = engine.subscribe("system")?;
 
-    // MapGUIの初期化
-    let mut map_gui = MapGUI::new(event_bus.clone());
-    info!("MapGUIを初期化しました");
+    // GraphicalMapGUIの初期化
+    let mut map_gui = GraphicalMapGUI::new(event_bus.clone());
+    info!("GraphicalMapGUIを初期化しました");
 
     // サンプルマップとユニットを設定
     let map = create_demo_map();
+
+    // マップの統計情報を表示（デバッグ用）
+    let mut plain_count = 0;
+    let mut forest_count = 0;
+    let mut mountain_count = 0;
+    let mut water_count = 0;
+    let mut road_count = 0;
+    let mut city_count = 0;
+    let mut base_count = 0;
+
+    for x in 0..map.width as i32 {
+        for y in 0..map.height as i32 {
+            let pos = MapPosition::new(x, y);
+            if let Some(cell) = map.get_cell(&pos) {
+                match cell.cell_type {
+                    CellType::Plain => plain_count += 1,
+                    CellType::Forest => forest_count += 1,
+                    CellType::Mountain => mountain_count += 1,
+                    CellType::Water => water_count += 1,
+                    CellType::Road => road_count += 1,
+                    CellType::City => city_count += 1,
+                    CellType::Base => base_count += 1,
+                }
+
+                // パリティチェックのデバッグ出力
+                let parity = (x + y) % 2;
+                if x < 10 && y < 10 {
+                    // 左上の一部だけ出力
+                    println!("位置 ({}, {}), パリティ: {}", x, y, parity);
+                }
+            }
+        }
+    }
+
+    println!("マップの統計情報:");
+    println!("平地: {} マス", plain_count);
+    println!("森林: {} マス", forest_count);
+    println!("山地: {} マス", mountain_count);
+    println!("水域: {} マス", water_count);
+    println!("道路: {} マス", road_count);
+    println!("都市: {} マス", city_count);
+    println!("拠点: {} マス", base_count);
+
     map_gui.set_map(map);
     info!("サンプルマップを生成しました");
 
@@ -216,17 +276,22 @@ fn main() -> Result<()> {
     };
     map_gui.set_view_options(view_options);
 
+    // グラフィカルレンダリングを有効化
+    info!("グラフィカルレンダリングを有効化します...");
+    match map_gui.enable_graphical_rendering(&window).await {
+        Ok(_) => info!("グラフィカルレンダリングを有効化しました"),
+        Err(e) => {
+            log::error!("グラフィカルレンダリングの有効化に失敗しました: {}", e);
+            println!("グラフィカルレンダリングの有効化に失敗しました。ASCIIモードで続行します。");
+        }
+    }
+
     // ゲームループの設定
     let config = LoopConfig::default();
     let mut game_loop = engine::GameLoop::new(config, receiver);
 
     // エンジンの起動
     engine.run()?;
-
-    // 初期マップ情報を表示
-    print_map_info(&engine, &map_gui);
-    println!("自動スクロールデモを開始します。1秒後に移動を開始します...");
-    thread::sleep(Duration::from_secs(1));
 
     // マップのある位置を選択
     let pos = MapPosition::new(5, 5);
@@ -247,50 +312,131 @@ fn main() -> Result<()> {
         map_gui.highlight_positions(highlights);
     }
 
-    // 選択状態を表示
-    print_map_info(&engine, &map_gui);
-    println!("位置(5, 5)を選択しました。1秒後に自動スクロールを開始します...");
-    thread::sleep(Duration::from_secs(1));
-
-    // 自動スクロールデモ: 縦に5回、横に2回、上に3回
-    println!("自動スクロールを開始します...");
-
-    // 縦に5回スクロール（下方向）
-    for i in 1..=5 {
-        map_gui.scroll(0, 30);
+    // ASCIIモードの場合のみ、コンソールに情報を表示
+    if map_gui.render_mode == RenderMode::Ascii {
+        // 初期マップ情報を表示
         print_map_info(&engine, &map_gui);
-        println!("縦方向スクロール {}/5", i);
+        println!("自動スクロールデモを開始します。1秒後に移動を開始します...");
         thread::sleep(Duration::from_secs(1));
-    }
 
-    // 横に2回スクロール（右方向）
-    for i in 1..=2 {
-        map_gui.scroll(30, 0);
+        // 選択状態を表示
         print_map_info(&engine, &map_gui);
-        println!("横方向スクロール {}/2", i);
+        println!("位置(5, 5)を選択しました。1秒後に自動スクロールを開始します...");
         thread::sleep(Duration::from_secs(1));
-    }
 
-    // 上に3回スクロール（上方向）
-    for i in 1..=3 {
-        map_gui.scroll(0, -30);
+        // 自動スクロールデモ: 縦に5回、横に2回、上に3回
+        println!("自動スクロールを開始します...");
+
+        // 縦に5回スクロール（下方向）
+        for i in 1..=5 {
+            map_gui.scroll(0, 30);
+            print_map_info(&engine, &map_gui);
+            println!("縦方向スクロール {}/5", i);
+            thread::sleep(Duration::from_secs(1));
+        }
+
+        // 横に2回スクロール（右方向）
+        for i in 1..=2 {
+            map_gui.scroll(30, 0);
+            print_map_info(&engine, &map_gui);
+            println!("横方向スクロール {}/2", i);
+            thread::sleep(Duration::from_secs(1));
+        }
+
+        // 上に3回スクロール（上方向）
+        for i in 1..=3 {
+            map_gui.scroll(0, -30);
+            print_map_info(&engine, &map_gui);
+            println!("上方向スクロール {}/3", i);
+            thread::sleep(Duration::from_secs(1));
+        }
+
+        // ズームしてみる
+        map_gui.zoom(1.5);
         print_map_info(&engine, &map_gui);
-        println!("上方向スクロール {}/3", i);
+        println!("マップをズームしました。デモを終了します...");
         thread::sleep(Duration::from_secs(1));
+    } else {
+        // グラフィカルモードの場合は、イベントループを実行
+        println!("グラフィカルモードでマップを表示しています。");
+        println!("矢印キーでスクロール、+/-キーでズームができます。");
+        println!("ESCキーで終了します。");
+
+        // 別スレッドでStopイベントを送信（30秒後）
+        let event_bus_clone = event_bus.clone();
+        thread::spawn(move || {
+            thread::sleep(Duration::from_secs(30));
+            event_bus_clone.publish("system", GameEvent::Stop).unwrap();
+        });
+
+        // イベントループを実行
+        event_loop.run(move |event, _, control_flow| {
+            *control_flow = ControlFlow::Poll;
+
+            match event {
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => {
+                    *control_flow = ControlFlow::Exit;
+                    // エンジンを停止
+                    event_bus.publish("system", GameEvent::Stop).unwrap();
+                }
+                Event::WindowEvent {
+                    event:
+                        WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Pressed,
+                                    virtual_keycode: Some(keycode),
+                                    ..
+                                },
+                            ..
+                        },
+                    ..
+                } => match keycode {
+                    VirtualKeyCode::Escape => {
+                        *control_flow = ControlFlow::Exit;
+                        // エンジンを停止
+                        event_bus.publish("system", GameEvent::Stop).unwrap();
+                    }
+                    VirtualKeyCode::Up => {
+                        map_gui.scroll(0, -10);
+                    }
+                    VirtualKeyCode::Down => {
+                        map_gui.scroll(0, 10);
+                    }
+                    VirtualKeyCode::Left => {
+                        map_gui.scroll(-10, 0);
+                    }
+                    VirtualKeyCode::Right => {
+                        map_gui.scroll(10, 0);
+                    }
+                    VirtualKeyCode::Equals => {
+                        map_gui.zoom(1.1);
+                    }
+                    VirtualKeyCode::Minus => {
+                        map_gui.zoom(0.9);
+                    }
+                    _ => {}
+                },
+                Event::WindowEvent {
+                    event: WindowEvent::Resized(new_size),
+                    ..
+                } => {
+                    map_gui.handle_resize(new_size.width, new_size.height);
+                }
+                Event::MainEventsCleared => {
+                    // レンダリング
+                    map_gui.render().ok();
+
+                    // 次のフレームを要求
+                    window.request_redraw();
+                }
+                _ => {}
+            }
+        });
     }
-
-    // ズームしてみる
-    map_gui.zoom(1.5);
-    print_map_info(&engine, &map_gui);
-    println!("マップをズームしました。デモを終了します...");
-    thread::sleep(Duration::from_secs(1));
-
-    // 別スレッドでStopイベントを送信（5秒後）
-    let event_bus_clone = event_bus.clone();
-    thread::spawn(move || {
-        thread::sleep(Duration::from_millis(500));
-        event_bus_clone.publish("system", GameEvent::Stop).unwrap();
-    });
 
     // ゲームループの実行
     match game_loop.run() {

@@ -14,3 +14,5 @@ anyhow = "1.0"
 log = "0.4"
 env_logger = "0.10"
 rand = "0.8"
+tokio = { version = "1.28", features = ["full"] }
+winit = "0.28"

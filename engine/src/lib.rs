@@ -1,10 +1,20 @@
 pub mod core;
 pub mod events;
+pub mod graphics;
 pub mod gui;
 
 use self::core::{GameLoop as CoreGameLoop, LoopConfig as CoreLoopConfig};
 pub use self::events::{EventBus, GameEvent, LogLevel, PrioritizedEvent, Priority};
-pub use self::gui::{map_gui::MapGUI, map_gui::MapViewOptions};
+pub use self::graphics::{
+    assets::{AssetManager, AtlasId, TextureId},
+    camera::Camera,
+    renderer::map_renderer::MapRenderer,
+    window::Window,
+};
+pub use self::gui::{
+    map_gui::{MapGUI, MapViewOptions},
+    graphical_map_gui::{GraphicalMapGUI, RenderMode},
+};
 // modelのPositionをre-exportしない - 直接modelからインポートする
 use anyhow::Result;
 

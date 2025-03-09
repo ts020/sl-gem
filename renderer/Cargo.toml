@@ -1,0 +1,45 @@
+[package]
+name = "renderer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[example]]
+name = "shader_tester"
+path = "examples/shader_tester.rs"
+
+[dependencies]
+# 基本的な依存関係
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.10"
+
+# モデルの依存関係
+model = { path = "../model" }
+
+# グラフィックス関連の依存関係
+wgpu = "0.16"
+winit = "0.28"
+bytemuck = { version = "1.13", features = ["derive"] }
+image = "0.24"
+glam = "0.24"                                          # ベクトル/行列計算用
+
+# 非同期処理関連
+futures-intrusive = "0.5"
+tokio = { version = "1.28", features = ["full"] } # 非同期ランタイム
+pollster = "0.3"                                  # 非同期操作の同期実行用
+
+# シェーダーテスト環境用の追加依存関係
+egui = "0.22"                                      # GUIライブラリ
+egui-wgpu = "0.22"                                 # egui-wgpu統合
+egui-winit = "0.22"                                # egui-winit統合
+clap = { version = "4.3", features = ["derive"] }  # コマンドライン引数
+chrono = "0.4"                                     # 日時処理
+base64 = "0.13"                                    # Base64エンコード
+ron = "0.8"                                        # Rusty Object Notation
+serde = { version = "1.0", features = ["derive"] } # シリアライズ/デシリアライズ
+
+[dev-dependencies]
+criterion = "0.4" # ベンチマーク用

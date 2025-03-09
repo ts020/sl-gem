@@ -32,13 +32,13 @@ impl Default for MapViewOptions {
 
 /// マップGUIコンポーネント
 pub struct MapGUI {
-    event_bus: EventBus,
-    map: Option<Map>,
-    units: HashMap<u32, Unit>,
-    view_options: MapViewOptions,
-    selected_position: Option<MapPosition>,
-    selected_unit_id: Option<u32>,
-    highlight_positions: Vec<MapPosition>,
+    pub event_bus: EventBus,
+    pub map: Option<Map>,
+    pub units: HashMap<u32, Unit>,
+    pub view_options: MapViewOptions,
+    pub selected_position: Option<MapPosition>,
+    pub selected_unit_id: Option<u32>,
+    pub highlight_positions: Vec<MapPosition>,
 }
 
 impl MapGUI {
@@ -207,7 +207,7 @@ impl MapGUI {
     }
 
     /// マップ更新イベントを発行
-    fn publish_map_updated(&self) -> Result<()> {
+    pub fn publish_map_updated(&self) -> Result<()> {
         self.event_bus.publish(
             "map_gui",
             GameEvent::Log {
